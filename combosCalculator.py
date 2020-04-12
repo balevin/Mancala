@@ -21,4 +21,5 @@ def combosWithCaringAboutScore():
 
 # print(combosWithoutCaringAboutScore())
 print(combosWithCaringAboutScore())
-# 1,399,358,844,974.0
+# 1,399,358,844,974
+# 6,566,222,272,526
