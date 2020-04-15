@@ -18,6 +18,7 @@ class Board:
         else:
             self.opScore = opScore
         self.myTurn = myTurn
+        self.state = self.myMarbles+self.opMarbles
         # print(self.__str__())
 
     def __str__(self):
@@ -54,19 +55,21 @@ class Board:
     def makeMove(self, pile):
         # Move is my move
         reward = 0
-        # try:        
-        #     if (int(pile)>6) or (int(pile)<1):
-        #         print('Choose a valid pile')
-        #         return
-        # except:
-        #     print('Choose a valid pile')
-        #     return
+        try:        
+            if (int(pile)>5) or (int(pile)<0):
+                # print('Choose a valid pile')
+                # return Board(self.myMarbles, self.opMarbles, self.myScore, self.opScore, self.myTurn)
+                return
+        except:
+            # print('Choose a valid pile')
+                # return Board(self.myMarbles, self.opMarbles, self.myScore, self.opScore, self.myTurn)
+                return
         if self.myTurn:
-            # startIndex = 6-int(pile)
-            startIndex = pile
+            startIndex = int(pile)
             numMarbles = self.myMarbles[startIndex]
             if numMarbles == 0:
                 # print('Choose a pile with marbles in it\n')
+                # return Board(self.myMarbles, self.opMarbles, self.myScore, self.opScore, self.myTurn)
                 return
             self.myMarbles[startIndex] = 0
             currentIndex = startIndex+1
@@ -110,12 +113,12 @@ class Board:
             if self.myScore>=25:
                 reward += 25
         else:
-            # startIndex = int(pile)-1
-            startIndex = pile
+            startIndex = int(pile)
+            # startIndex = pile
             numMarbles = self.opMarbles[startIndex]
             if numMarbles == 0:
                 # print('Choose a pile with marbles in it\n')
-                return
+                return Board(self.myMarbles, self.opMarbles, self.myScore, self.opScore, self.myTurn)
             self.opMarbles[startIndex] = 0
             currentIndex = startIndex-1
             addToTheirs = True
@@ -164,7 +167,7 @@ class Board:
                 reward += 20
         # print(self.__str__())
         # print(self.my)
-        return reward
+        # return Board(self.myMarbles, self.opMarbles, self.myScore, self.opScore, self.myTurn)
     def endGame(self):
         self.myScore += sum(self.myMarbles)
         self.opScore += sum(self.opMarbles)
@@ -188,15 +191,18 @@ class Board:
     def getState(self):
         return [self.myMarbles, self.opMarbles]
     
-    def is_valid(self, me, pile):
-        if me:
-            # print(self.myMarbles)
-            if self.myMarbles[int(pile)] <= 0:
-                return False
+    def is_valid(self, pile):
+        # associated with it being passed in as index number (0,11)
+        if self.myTurn:
+            if (int(pile)>-1) and (int(pile)<6):
+                if self.myMarbles[int(pile)] > 0:
+                    return True
+            return False
         else:
-            if self.opMarbles[int(pile)] <= 0:
-                return False
-        return True
+            if (int(pile)>5) and (int(pile)<12):
+                if self.opMarbles[int(pile)] > 0:
+                    return True
+            return False
     def getMyAvailable(self):
         available = list(range(6))
         zeroes = [k for k in self.myMarbles if k==0]
@@ -216,18 +222,24 @@ class Board:
         if self.isOver() and self.myScore>=25:
             return True
         return False
-    def randomAvailable(self, turn):
-        if turn:
-            options = self.getMyAvailable()
+    def randomPossibleMove(self):
+        possible = []
+        if self.myTurn:
+            for index, val in enumerate(self.myMarbles):
+                if val!=0:
+                    possible.append(index)
         else:
-            options = self.getOpAvailable()
-        foundOne = False
-        while not foundOne:
-            trial = random.randint(1,6)
-            if trial in options:
-                foundOne = True
-        return trial
+            for index, val in enumerate(self.opMarbles):
+                if val!=0:
+                    possible.append(index+6)
+        numPossible = len(possible)
+        randInd = random.randint(0,numPossible-1)
+        # print('possible: ', possible)
+        # print('randInd', randInd)
+        return possible[randInd]
+
 def playGame():
+    # board = Board([1,0,0,0,1,7], [0,0,0,2,0,0], 13,24, True)
     board = Board()
     while not board.isOver():
         if board.myTurn:
@@ -236,6 +248,5 @@ def playGame():
             who = "Other Player: "
         move = input(who + 'input which pile you would like to move: \n')
         board.makeMove(move)
-        print(board.getOpAvailable())
 
 # playGame()

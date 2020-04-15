@@ -20,17 +20,20 @@ class RandomPlayer(Player):
         :param board: The board to make a move on
         :return: The result of the move
         """
-        if board.myTurn:
-            options = board.getMyAvailable()
-        else:
-            options = board.getOpAvailable()
-        foundOne = False
-        while not foundOne:
-            trial = random.randint(0,5)
-            if trial in options:
-                foundOne = True
-        board.makeMove(trial)
-        return board.getState(), board.isOver()
+        # print('making random move')
+        # if board.myTurn:
+        #     options = board.getMyAvailable()
+        # else:
+        #     options = board.getOpAvailable()
+        # foundOne = False
+        # while not foundOne:
+        #     trial = random.randint(0,5)
+        #     if trial in options:
+        #         foundOne = True
+        # board.makeMove(trial)
+        # return board.getState(), board.isOver()
+        move = board.randomPossibleMove()
+        board.makeMove(move-6)
 
     def final_result(self, result):
         """

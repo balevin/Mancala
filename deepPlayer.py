@@ -293,7 +293,7 @@ class deepPlayer(Player):
                                                 feed_dict={network.input_positions: [input_pos]})
         return probs, qvalues
 
-    def get_valid_probs(self, input_pos, network, boards, special=False):
+    def get_valid_probs(self, input_pos, network, boards, special=True):
         """
         Evaluates the board positions `input_pos` with the Neural Network `network`. It post-processes the result
         by setting the probability of all illegal moves in the current position to -1.
@@ -303,23 +303,21 @@ class deepPlayer(Player):
         :param boards: A list of corresponding Board objects for testing if a move is illegal.
         :return: A tuple of post-processed probabilities and q values. Probabilities for illegal moves are set to -1.
         """
-        
         probabilities, qvals = self.get_probs(input_pos, network)
-        if not special:
-            if boards[0].myTurn:
-                qvals = np.copy(qvals[0][0:6])
-                probabilities = np.copy(probabilities[0][0:6])
-            else:
-                qvals = np.copy(qvals[0][6:])
-                probabilities = np.copy(probabilities[0][6:])
-            qvals = np.copy(qvals.reshape(1,6))
-            probabilities = np.copy(probabilities.reshape(1,6))
-            qvals = np.copy(qvals)
+        # print(qvals[0].shape)
+        # print(qvals[1])
+        # print(qvals)
+        if boards[0].myTurn:
+            qvals = np.copy(qvals[0][0:6])
+            probabilities = np.copy(probabilities[0][0:6])
         else:
-            print(probabilities)
-            input()
-            print(qvals)
-            input()
+            qvals = np.copy(qvals[0][6:])
+            probabilities = np.copy(probabilities[0][6:])
+        qvals = np.copy(qvals.reshape(1,6))
+        probabilities = np.copy(probabilities.reshape(1,6))
+    # else:
+    #     probabilities = np.copy(probabilities)
+    #     qvals = np.copy(qvals)
         # We filter out all illegal moves by setting the probability to 0. We don't change the q values
         # as we don't want the NN to waste any effort of learning different Q values for moves that are illegal
         # anyway.
@@ -416,12 +414,12 @@ class deepPlayer(Player):
                 #     print(i[1])
                 #     input()
                 probs, qvals = self.get_valid_probs(firstInput,
-                                                    self.target_net, [Board(s[0], s[1]) for s in next_states], special=True)
-                print(probs)
-                print(qvals)
-                input()
-                # probs=probs[0]
-                # qvals=qvals[0]
+                                                    self.target_net, [Board(s[0], s[1]) for s in next_states], True)
+                # print(probs)
+                # print(qvals)
+                # input()
+                probs=probs[0]
+                qvals=qvals[0]
                 # print(qvals)
                 i = 0
                 for t in train_batch:
@@ -429,8 +427,8 @@ class deepPlayer(Player):
                         # print(t[2])
                         # print(probs)
                         # input()
-                        max_move = np.argmax(probs[i])
-                        max_qval = qvals[i][max_move]
+                        max_move = np.argmax(probs)
+                        max_qval = qvals[max_move]
                         target_qs.append(max_qval * self.reward_discount)
                         i += 1
                     else:
@@ -446,8 +444,18 @@ class deepPlayer(Player):
             actions = train_batch[:, 1]
 
             # We run the training step with the recorded inputs and new Q value targets.
+            # print(self.q_net.merge.shape)
+            # print(self.q_net.train_step.shape)
+            # print(np.asarray([self.q_net.merge, self.q_net.train_step]).shape)
+            # print(self.q_net.input_positions.shape)
+            # print(nn_input.shape)
+            # print(self.q_net.target_q.shape)
+            # print(target_qs.shape)
+            # print(self.q_net.actions.shape)
+            # print(actions.shape)
+            # print(type(nn_input))
             summary, _ = TFSN.get_session().run([self.q_net.merge, self.q_net.train_step],
-                                                feed_dict={self.q_net.input_positions: nn_input,
+                                                feed_dict={self.q_net.input_positions: np.asarray(nn_input).reshape(20,1,2,6),
                                                            self.q_net.target_q: target_qs,
                                                            self.q_net.actions: actions})
             self.random_move_prob *= self.random_move_decrease
@@ -469,7 +477,7 @@ rndplayer = RandomPlayer()
 TFSN.set_session(tf.Session())
 TFSN.get_session().run(tf.global_variables_initializer())
 
-game_number, p1_wins, p2_wins, draws = evaluate_players(rndplayer, nnplayer,games_per_battle=10000, num_battles=10)
+game_number, p1_wins, p2_wins, draws = evaluate_players(rndplayer, nnplayer,games_per_battle=1000, num_battles=5)
 
 p = plt.plot(game_number, p1_wins, 'g-', game_number, p2_wins, 'b-')
 

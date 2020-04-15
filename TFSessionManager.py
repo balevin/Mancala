@@ -15,11 +15,13 @@ class TFSessionManager:
     def get_session(cls):
         """
         Returns the one shared session between all players. If no session has been explicitly set, a new session
-        is created.
+        is created.n
         :return: The one shared session between all players.
         """
         if TFSessionManager.session is None:
             TFSessionManager.session = tf.Session()
+        init  = tf.initialize_all_variables()
+        TFSessionManager.session.run(init)
         return TFSessionManager.session
 
     @classmethod
