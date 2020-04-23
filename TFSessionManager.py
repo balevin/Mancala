@@ -20,8 +20,8 @@ class TFSessionManager:
         """
         if TFSessionManager.session is None:
             TFSessionManager.session = tf.Session()
-        init  = tf.initialize_all_variables()
-        TFSessionManager.session.run(init)
+            init  = tf.initialize_all_variables()
+            TFSessionManager.session.run(init)
         return TFSessionManager.session
 
     @classmethod

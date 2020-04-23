@@ -7,6 +7,7 @@ from util import evaluate_players
 from TFSessionManager import TFSessionManager as TFSN
 import matplotlib.pyplot as plt
 import random
+
 class QNetwork:
     def __init__(self, name, learning_rate=0.01):
         self.learning_rate = learning_rate
@@ -26,7 +27,7 @@ class QNetwork:
         with tf.compat.v1.variable_scope(name):
             # Try this as just 12 with number representing each thing
             # Try this as dim 48*12. Each 48 bits represents a bucket, the first x are 1s if that bucket contains x marbles
-            self.input_positions = tf.placeholder(tf.float32, shape=(None, 12), name='inputs')
+            self.input_positions = tf.placeholder(tf.float32, shape=(None,12*48), name='inputs')
             # self.input_positions = tf.placeholder(tf.float32, shape=(None, 12*48), name='inputs')
             
             # Try with output of 6, one for each of 6 options, have to somehow specify first 6 for one, second 6 for other
@@ -42,23 +43,24 @@ class QNetwork:
             self.probabilities = tf.nn.softmax(self.q_values, name='probabilities')
             mse = tf.losses.mean_squared_error(predictions=self.q_values, labels=self.target_input)
             self.train_step = tf.train.GradientDescentOptimizer(learning_rate=self.learning_rate).minimize(mse,name='train')
-
+    def save(self):
+        tf.saved_model.save(self, 'models/')
 
 class EGreedyNNQPlayer(Player):
     def board_state_to_nn_input(self, state):
         # For first way:
-        state = np.array(state)
-        return state
+        # state = np.array(state)
+        # return state
 
         # For second way:
-        # endList = []
-        # for number in board.myMarbles:
-        #     for i in range(number):
-        #         endList.append(1)
-        #     for i in range(48-number):
-        #         endList.apopend(0)
-        # state = np.array(endlist)
-        # return state
+        endList = []
+        for number in state:
+            for i in range(number):
+                endList.append(1)
+            for i in range(48-number):
+                endList.append(0)
+        state = np.array(endList)
+        return state
 
     def __init__(self, name, reward_discount = 0.95, win_value = 1.0, draw_value = 0.0,
         loss_value = -1.0, learning_rate = 0.01, training = True,
@@ -78,6 +80,7 @@ class EGreedyNNQPlayer(Player):
         self.random_move_prob = random_move_prob
         self.random_move_decrease = random_move_decrease
         self.init = tf.global_variables_initializer()
+        self.extra_reward_log = []
 
         super().__init__()
 
@@ -94,7 +97,7 @@ class EGreedyNNQPlayer(Player):
         targets = []
         for i in range(game_length):
             target = np.copy(self.values_log[i])
-            target[self.action_log[i]] = self.reward_discount*self.next_max_log[i]
+            target[self.action_log[i]] = self.reward_discount*(self.next_max_log[i] + self.extra_reward_log[i])
             targets.append(target)
         return targets
 
@@ -106,7 +109,7 @@ class EGreedyNNQPlayer(Player):
     def move(self, board):
         # print('making nn move')
         # has to decide which move to take
-        self.board_position_log.append(board.state.copy())
+        self.board_position_log.append(board.myMarbles+board.opMarbles)
         nn_input = self.board_state_to_nn_input(board.myMarbles+board.opMarbles)
         probs, qvalues = self.get_probs(nn_input)
         qvalues=np.copy(qvalues)
@@ -127,9 +130,9 @@ class EGreedyNNQPlayer(Player):
             self.next_max_log.append(qvalues[np.argmax(probs)])
         self.action_log.append(move)
         self.values_log.append(qvalues)
-        # print(move)
-        board.makeMove(move)
-
+        # print(msove)
+        extra = board.makeMove(move)
+        self.extra_reward_log.append(extra)
     def final_result(self, board):
         if board.myMarbles>board.opMarbles:
             if self.me:
@@ -149,8 +152,14 @@ class EGreedyNNQPlayer(Player):
         self.next_max_log.append(reward)
         if self.training:
             targets = self.calculate_targets()
+            # print('targets: ', targets)
             nn_input=[self.board_state_to_nn_input(x) for x in self.board_position_log]
             TFSN.get_session().run([self.nn.train_step], 
-            {self.nn.input_positions:nn_input,
+            feed_dict={self.nn.input_positions:nn_input,
             self.nn.target_input:targets})
-            self.random_move_prob*=self.random_move_decrease
+            print(self.nn)
+            print(type(self.nn))
+            if self.random_move_prob>= 0.05:
+                self.random_move_prob*=self.random_move_decrease
+            # self.nn.save()
+            # input()

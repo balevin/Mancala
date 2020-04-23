@@ -20,6 +20,7 @@ class RandomPlayer(Player):
         :param board: The board to make a move on
         :return: The result of the move
         """
+        # 
         # print('making random move')
         # if board.myTurn:
         #     options = board.getMyAvailable()
