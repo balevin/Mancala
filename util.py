@@ -5,10 +5,19 @@ def play_game(board, player1, player2):
     player2.new_game(False)
     finished = False
     moveCount = 0
+    hadCount = 0
     while not finished:
         if board.myTurn:
             # print('nn turn')
-            player1.move(board)
+            # print('start turn')
+            moveCount += 1
+            if player1.training:
+                player1.move(board)
+            else:
+                had = player1.move(board)
+                if had:
+                    hadCount += 1
+            # print('done turn')
         else:
             # print('random move')
             # print('random turn')
@@ -27,16 +36,20 @@ def play_game(board, player1, player2):
         finalResult = 'tie'
     player1.final_result(board)
     player2.final_result(board)
-    return finalResult
+    return finalResult, moveCount, hadCount
 
 def battle(player1, player2, num_games = 100000, silent = False):
     draw_count = 0
     oneCount = 0
     twoCount = 0
     draw_count=0
+    medTotal = 0
+    medHad = 0
     for i in range(num_games):
         board = Board()
-        result = play_game(board, player1, player2)
+        result, total, had = play_game(board, player1, player2)
+        medTotal += total
+        medHad += had
         # print(board)
         if result == 'me':
             # print('nn won')
@@ -47,18 +60,18 @@ def battle(player1, player2, num_games = 100000, silent = False):
         else:
             # print('tie')
             draw_count += 1
-        # if i%50==0:
-            # print('finished game #' + str(i))
+        #if i%20==0:
+   #         print('finished game #' + str(i))
         # input()
     if not silent:
-        print("After {} game we have draws: {}, Neural Net wins: {}, and Random wins: {}.".format(num_games, draw_count,
+        print("After {} game we have draws: {}, Discreett wins: {}, and Random wins: {}.".format(num_games, draw_count,
                                                                                                   oneCount,
                                                                                                   twoCount))
 
-        print("Which gives percentages of draws: {:.2%}, Neural Net wins: {:.2%}, and Random wins:  {:.2%}".format(
+        print("Which gives percentages of draws: {:.2%}, Discret wins: {:.2%}, and Random wins:  {:.2%}".format(
             draw_count / num_games, oneCount / num_games, twoCount / num_games))
     # print(board)
-    return oneCount, twoCount, draw_count
+    return oneCount, twoCount, draw_count, medTotal, medHad 
 
 
 def evaluate_players(p1, p2, games_per_battle=100, num_battles=100, writer = None, silent = False):
@@ -67,11 +80,15 @@ def evaluate_players(p1, p2, games_per_battle=100, num_battles=100, writer = Non
     draws = []
     game_number = []
     game_counter = 0
-
+    bigTotal = 0
+    bigHad = 0
+    
     for i in range(num_battles):
-        if i%50==0:
+        if i%100==0:
             print('starting battle #'+str(i))
-        p1win, p2win, draw = battle(p1, p2, games_per_battle, silent)
+        p1win, p2win, draw, total, had = battle(p1, p2, games_per_battle, silent)
+        bigTotal += total
+        bigHad += had
         p1_wins.append(p1win)
         p2_wins.append(p2win)
         draws.append(draw)
@@ -82,5 +99,9 @@ def evaluate_players(p1, p2, games_per_battle=100, num_battles=100, writer = Non
                                         tf.Summary.Value(tag='Player 2 Win', simple_value=p2win),
                                         tf.Summary.Value(tag='Draw', simple_value=draw)])
             writer.add_summary(summary, game_counter)
+        if i%5==0:
+            print('total moves: ', bigTotal)
+            print('total had: ', bigHad)
+            print('percentage had: ', bigHad/bigTotal)
 
     return game_number, p1_wins, p2_wins, draws

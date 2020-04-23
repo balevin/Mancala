@@ -1,10 +1,8 @@
 import numpy as np
-import tensorflow as tf
 from game import Board
 from Player import Player
 from RandomPlayer import RandomPlayer
 from util import evaluate_players
-from TFSessionManager import TFSessionManager as TFSN
 import matplotlib.pyplot as plt
 import random
 import pickle
@@ -28,6 +26,7 @@ class DiscreetQValuesPlayer(Player):
         else:
             pickle_in = open("dict.pickle","rb")
             self.qValues = pickle.load(pickle_in)
+            print('loaded it')
         super().__init__()
 
     
@@ -38,10 +37,14 @@ class DiscreetQValuesPlayer(Player):
         self.values_log = []
 
     def updateQValues(self, gameReward):
+        totalMoves = 1
+        hadMoves = 0
         game_length = len(self.action_log)
         for i in range(game_length-1):
             state = tuple(self.currentPosition[i])
+            totalMoves += 1
             if state in self.qValues:
+                hadMoves += 1
                 thisStateActions = self.qValues[state]
             else:
                 thisStateActions = [0,0,0,0,0,0]
@@ -51,38 +54,60 @@ class DiscreetQValuesPlayer(Player):
             else:
                 nextQValues = [0,0,0,0,0,0]
                 self.qValues[nextState] = nextQValues
-            thisStateActions[self.action_log[i]] = (1-self.alpha)*thisStateActions[self.action_log[i]] + self.alpha*(self.extra_reward_log[i]+(gameReward*self.end_discount**(game_length-1-i)) + self.gamma*max(nextQValues))
+            try:
+                thisStateActions[self.action_log[i]] = (1-self.alpha)*thisStateActions[self.action_log[i]] + self.alpha*(self.extra_reward_log[i]+(gameReward*self.end_discount**(game_length-1-i)) + self.gamma*max(nextQValues))
+            except:
+                print(thisStateActions[self.action_log[i]])
+                print(self.extra_reward_log[i])
+                print(max(nextQValues))
+                input()
             self.qValues[state] = thisStateActions
         state = tuple(self.currentPosition[game_length-1])
         if state in self.qValues:
             thisStateActions = self.qValues[state]
+            hadMoves += 1
         else:
             thisStateActions = [0,0,0,0,0,0]
         thisStateActions[self.action_log[game_length-1]] = (1-self.alpha)*thisStateActions[self.action_log[i]] + self.alpha*(self.extra_reward_log[game_length-1]+gameReward + self.gamma*max(nextQValues))
         self.qValues[state] = thisStateActions 
-
+        return totalMoves, hadMoves
     def move(self, board):
         self.currentPosition.append(board.myMarbles+board.opMarbles)
         if (self.training) and (random.random() < self.random_move_prob):
             move = board.randomPossibleMove()
         else:
-            
             if tuple(board.myMarbles+board.opMarbles) in self.qValues:
+                available = board.getMyAvailable()
                 values = self.qValues[tuple(board.myMarbles+board.opMarbles)]
-                move = values.index(max(values))
-                available = board.getMyAvailabele()
-                ind = 1
-                while move not in available:
-                    move  = values.index(sorted(values)[ind])
-                    ind += 1
+                sortedValues = sorted(values, reverse=True)
+                if float(sum(values)) == 0.0:
+                    move = board.makeSmartMove()
+
+                for i in range(len(values)):
+                    if values.index(sortedValues[i]) in available:
+                        move = values.index(sortedValues[i])
+                        break
+                had = True
             else:
-                move = board.randomPossibleMove()
+                move = board.makeSmartMove()
+                had = False
+        if not move and move!=0:
+            move = board.makeSmartMove()
+        if not move and move !=0:
+            move = board.randomPossibleMove()
+        try:
+            move
+        except:
+            move = board.randomPossibleMove()
         self.action_log.append(move)
         if self.training:
             extra = board.makeMove(move)
             self.extra_reward_log.append(extra)
         else:
             board.makeMove(move)
+        if not self.training:
+            return had
+        # input()
     def final_result(self, board):
         if board.myMarbles>board.opMarbles:
             if self.me:
@@ -104,6 +129,6 @@ class DiscreetQValuesPlayer(Player):
                 self.random_move_prob*=self.random_move_decrease
     
     def saveQValues(self):
-        pickle_out = open("pickles/dict.pickle","wb")
+        pickle_out = open("dict.pickle","wb")
         pickle.dump(self.qValues, pickle_out)
         pickle_out.close()
