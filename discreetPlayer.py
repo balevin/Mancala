@@ -160,7 +160,8 @@ class DiscreetQValuesPlayer(Player):
             self.updateQValues(reward)
             if self.random_move_prob>= 0.33:
                 self.random_move_prob*=self.random_move_decrease
-    
+    def typeRep(self):
+        return ' Dolos '
     def saveQValues(self):
         if self.me:
             pickle_out = open("player1.pickle","wb")

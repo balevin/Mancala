@@ -67,13 +67,13 @@ def battle(player1, player2, num_games = 100000, silent = False):
    #         print('finished game #' + str(i))
         # input()
     if not silent:
-        print("After {} game we have draws: {}, Discrete wins: {}, and Random wins: {}.".format(num_games, draw_count,
-                                                                                                  oneCount,
-                                                                                                  twoCount))
+        p1 = player1.typeRep()
+        p2 = player2.typeRep()
+        print("After {} game we have draws: {}, {} wins: {}, and {} wins: {}.".format(num_games, draw_count, p1, oneCount, p2, twoCount))
 
-        print("Which gives percentages of draws: {:.2%}, Discrete wins: {:.2%}, and Random wins:  {:.2%}".format(
-            draw_count / num_games, oneCount / num_games, twoCount / num_games))
-    # print(board)
+        print("Which gives percentages of draws: {:.2%}, {} wins: {:.2%}, and {} wins:  {:.2%}".format(
+            draw_count / num_games, p1, oneCount / num_games, p2, twoCount / num_games))
+
     return oneCount, twoCount, draw_count, medTotal, medHad, medPos
 
 
@@ -104,9 +104,9 @@ def evaluate_players(p1, p2, games_per_battle=100, num_battles=100, writer = Non
                                         tf.Summary.Value(tag='Player 2 Win', simple_value=p2win),
                                         tf.Summary.Value(tag='Draw', simple_value=draw)])
             writer.add_summary(summary, game_counter)
-        if i%5==0:
-            print('total moves: ', bigTotal)
-            print('total had: ', bigHad)
-            print('percentage had: ', bigHad/bigTotal)
+        # if i%5==0:
+            # print('total moves: ', bigTotal)
+            # print('total had: ', bigHad)
+            # print('percentage had: ', bigHad/bigTotal)
 
     return game_number, p1_wins, p2_wins, draws, bigPos

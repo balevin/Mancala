@@ -19,7 +19,7 @@ class Board:
             self.opScore = opScore
         self.myTurn = myTurn
         self.state = self.myMarbles+self.opMarbles
-        # print(s elf.__str__())
+        # print(self.__str__())
 
     def __str__(self):
         boardRep = "-- "

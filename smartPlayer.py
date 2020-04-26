@@ -52,3 +52,6 @@ class SmartPlayer(Player):
         :param side: The side this player will be playing
         """
         self.me = me
+    
+    def typeRep(self):
+        return ' smart '
