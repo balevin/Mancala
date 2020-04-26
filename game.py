@@ -19,7 +19,7 @@ class Board:
             self.opScore = opScore
         self.myTurn = myTurn
         self.state = self.myMarbles+self.opMarbles
-        #print(self.__str__())
+        # print(s elf.__str__())
 
     def __str__(self):
         boardRep = "-- "
@@ -66,10 +66,6 @@ class Board:
             numMarbles = self.myMarbles[startIndex]
             if numMarbles == 0:
                 # print('Choose a pile with marbles in it\n')
-                print('wtf how did we do this')
-                print(pile)
-                print(self)
-                input()
                 return
             self.myMarbles[startIndex] = 0
             currentIndex = startIndex+1
@@ -99,7 +95,7 @@ class Board:
                             currentIndex = 0
                             addToScore = False
             if (currentIndex == 5) and  (not addToMine) and (not addToScore):
-                reward += 1
+                reward += 10 
                 self.myTurn = True
             else:
                 self.myTurn = False
@@ -107,7 +103,7 @@ class Board:
             if (addToMine) and (not addToScore) and (self.myMarbles[currentIndex-1] == 1) and (self.opMarbles[currentIndex-1]>0):
                 self.myScore += 1
                 self.myMarbles[currentIndex-1] = 0
-                reward += self.opMarbles[currentIndex-1] + 1
+                reward += 5*(self.opMarbles[currentIndex-1] + 1)
                 self.myScore += self.opMarbles[currentIndex-1]
                 self.opMarbles[currentIndex-1] = 0
         else:
@@ -148,7 +144,7 @@ class Board:
                             currentIndex = 5
                             addToTheirScore = True
             if (currentIndex == 0) and  (not addToTheirs) and (not addToTheirScore):
-                reward += 1
+                reward += 10
                 self.myTurn = False
                 #print('return')
             else:
@@ -159,12 +155,13 @@ class Board:
             if (addToTheirs) and (not addToTheirScore) and (self.opMarbles[currentIndex+1] == 1) and (self.myMarbles[currentIndex+1]>0):
                 self.opScore += 1
                 self.opMarbles[currentIndex+1] = 0
-                reward += self.myMarbles[currentIndex+1] + 1
+                reward += 5*(self.myMarbles[currentIndex+1] + 1)
                 self.opScore += self.myMarbles[currentIndex+1]
                 self.myMarbles[currentIndex+1] = 0
         if show:
             print(self.__str__())
-        #print(self.__str__())
+        # print(self.__str__())
+        # print()
         return reward
     def endGame(self):
         self.myScore += sum(self.myMarbles)
@@ -205,9 +202,10 @@ class Board:
         available = list(range(6))
         if self.myTurn: 
             zeroes = [i for i in range(len(self.myMarbles)) if self.myMarbles[i]==0]
+            available = [x for x in available if x not in zeroes]
         else:
             zeroes = [i for i in range(len(self.opMarbles)) if self.opMarbles[i]==0]
-        available = [x for x in available if x not in zeroes]
+            available = [x for x in available if x not in zeroes]
         return available
     
     def getOpAvailable(self):
@@ -232,7 +230,9 @@ class Board:
         else:
             for index, val in enumerate(self.opMarbles):
                 if val!=0:
-                    possible.append(index+6)
+                    #possible.append(index+6)
+                    possible.append(index)
+            # possible = [5-x for x in possible]
         numPossible = len(possible)
         randInd = random.randint(0,numPossible-1)
         # print('possible: ', possible)
@@ -248,7 +248,7 @@ class Board:
                         return i
         else:
             available = self.getMyAvailable()
-            for i in reversed(range(6)):
+            for i in range(6):
                 if i in available:
                     if self.opMarbles[i]-i == 1:
                         return i 
@@ -259,47 +259,62 @@ class Board:
         maxSixe = 0
         capture = None
         if self.myTurn:
+            savailable = self.getMyAvailable()
             for i in range(6):
                 if i in available:
-                    landing = i+self.myMarbles[i]%12
+                    landing = (i+self.myMarbles[i])
+                    if landing>6:
+                        landing = (landing-1)%12
                     if landing<6:
                         if self.myMarbles[landing]==0:
                             if self.opMarbles[landing]>maxSixe:
                                 maxSixe = self.opMarbles[landing]
                                 capture = i
         else:
+            available = self.getMyAvailable()
             for i in range(6):
                 if i in available:
-                    landing = i+self.opMarbles[i]%12
-                    if landing<6:
+                    landing = (i-self.opMarbles[i])
+                    if landing<=-8:
+                        landing += 13
+                    if landing<6 and landing>=0:
                         if self.opMarbles[landing]==0:
                             if self.myMarbles[landing]>maxSixe:
                                 maxSixe = self.myMarbles[landing]
                                 capture = i     
         return capture
     def scorePoints(self):
+        available = self.getMyAvailable()
         if self.myTurn:
-            for i in reversed(range(6)):
-                if i+self.myMarbles[i]>=6:
-                    return i
-        else:
             for i in range(6):
+                if i in available:
+                    if i+self.myMarbles[i]>=6:
+                        return i
+        else:
+            # print('ng for points')
+            # print(available)
+            for i in reversed(range(6)):
                 if self.opMarbles[i]-i>=1:
-                    return i
+                    if i in available:
+                        # print(i)
+                        return i
         return None
     def makeSmartMove(self):
         ballsBack = self.makeBallsBack()
         capture = self.findCapture()
-        if not ballsBack:
-            if not capture:
-                if not self.scorePoints():
+        # print('balls back: ', ballsBack)
+        # print('capture: ', capture)
+        if not ballsBack and ballsBack!=0:
+            if not capture and capture!=0:
+                score = self.scorePoints()
+                if not score and score!=0:
                     return self.randomPossibleMove()
                 else:
-                    return self.scorePoints()
+                    return score
             else:
                 return capture
         else:
-            if not capture:
+            if not capture and capture!=0:
                 return ballsBack
             else:
                 if self.myTurn:

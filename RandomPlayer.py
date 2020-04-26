@@ -12,6 +12,7 @@ class RandomPlayer(Player):
         """
         Getting ready for playing tic tac toe.
         """
+        self.me = None
         super().__init__()
 
     def move(self, board):
@@ -34,20 +35,20 @@ class RandomPlayer(Player):
         # board.makeMove(trial)
         # return board.getState(), board.isOver()
         move = board.randomPossibleMove()
-        board.makeMove(move-6)
+        board.makeMove(move)
 
     def final_result(self, result):
         """
         Does nothing.
-        :param result: The result of the game that just finished
+        :param result: The result of the game that i finished
         :return:
         """
 
         pass
 
-    def new_game(self, side: int):
+    def new_game(self, me):
         """
         Setting the side for the game to come. Noting else to do.
         :param side: The side this player will be playing
         """
-        pass
+        self.me = me

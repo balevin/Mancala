@@ -1,5 +1,4 @@
 from game import Board
-
 def play_game(board, player1, player2):
     player1.new_game(True)
     player2.new_game(False)
@@ -17,6 +16,8 @@ def play_game(board, player1, player2):
                 had = player1.move(board)
                 if had:
                     hadCount += 1
+            # else:
+            # player1.move(board)
             # print('done turn')
         else:
             # print('random move')
@@ -36,7 +37,7 @@ def play_game(board, player1, player2):
         finalResult = 'tie'
     player1.final_result(board)
     player2.final_result(board)
-    return finalResult, moveCount, hadCount
+    return finalResult, moveCount, hadCount, set(player1.currentPosition)
 
 def battle(player1, player2, num_games = 100000, silent = False):
     draw_count = 0
@@ -45,11 +46,13 @@ def battle(player1, player2, num_games = 100000, silent = False):
     draw_count=0
     medTotal = 0
     medHad = 0
+    medPos = set()
     for i in range(num_games):
         board = Board()
-        result, total, had = play_game(board, player1, player2)
+        result, total, had, pos = play_game(board, player1, player2)
         medTotal += total
         medHad += had
+        medPos.update(pos)
         # print(board)
         if result == 'me':
             # print('nn won')
@@ -64,14 +67,14 @@ def battle(player1, player2, num_games = 100000, silent = False):
    #         print('finished game #' + str(i))
         # input()
     if not silent:
-        print("After {} game we have draws: {}, Discreett wins: {}, and Random wins: {}.".format(num_games, draw_count,
+        print("After {} game we have draws: {}, Discrete wins: {}, and Random wins: {}.".format(num_games, draw_count,
                                                                                                   oneCount,
                                                                                                   twoCount))
 
-        print("Which gives percentages of draws: {:.2%}, Discret wins: {:.2%}, and Random wins:  {:.2%}".format(
+        print("Which gives percentages of draws: {:.2%}, Discrete wins: {:.2%}, and Random wins:  {:.2%}".format(
             draw_count / num_games, oneCount / num_games, twoCount / num_games))
     # print(board)
-    return oneCount, twoCount, draw_count, medTotal, medHad 
+    return oneCount, twoCount, draw_count, medTotal, medHad, medPos
 
 
 def evaluate_players(p1, p2, games_per_battle=100, num_battles=100, writer = None, silent = False):
@@ -82,16 +85,18 @@ def evaluate_players(p1, p2, games_per_battle=100, num_battles=100, writer = Non
     game_counter = 0
     bigTotal = 0
     bigHad = 0
+    bigPos = set()
     
     for i in range(num_battles):
         if i%100==0:
             print('starting battle #'+str(i))
-        p1win, p2win, draw, total, had = battle(p1, p2, games_per_battle, silent)
+        p1win, p2win, draw, total, had, pos = battle(p1, p2, games_per_battle, silent)
         bigTotal += total
         bigHad += had
         p1_wins.append(p1win)
         p2_wins.append(p2win)
         draws.append(draw)
+        bigPos.update(pos)
         game_counter = game_counter + 1
         game_number.append(game_counter)
         if writer is not None:
@@ -104,4 +109,4 @@ def evaluate_players(p1, p2, games_per_battle=100, num_battles=100, writer = Non
             print('total had: ', bigHad)
             print('percentage had: ', bigHad/bigTotal)
 
-    return game_number, p1_wins, p2_wins, draws
+    return game_number, p1_wins, p2_wins, draws, bigPos
