@@ -25,6 +25,7 @@ game_number, p1_wins, p2_wins, draws, __ = evaluate_players(discreetPlayer, rndp
 game_number, p1_wins, p2_wins, draws, __ = evaluate_players(discreetPlayer, smrtplayer, games_per_battle=100000, num_battles=1)
 # game_number, p1_wins, p2_wins, draws = evaluate_players(smrtplayer, rndplayer, games_per_battle=100000, num_battles=1)
 
+
 # game_number, p1_wins, p2_wins, draws = evaluate_players(rndplayer, discreetPlayer, games_per_battle=100000, num_battles=1)
 #discreetPlayer.saveQValues()
 #p = plt.plot(game_numbe, draws, 'r-', game_number, p1_wins, 'g-', game_number, p2_wins, 'b-')
