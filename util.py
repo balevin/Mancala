@@ -9,15 +9,15 @@ def play_game(board, player1, player2):
         if board.myTurn:
             # print('nn turn')
             # print('start turn')
-            moveCount += 1
-            if player1.training:
-                player1.move(board)
-            else:
-                had = player1.move(board)
-                if had:
-                    hadCount += 1
+            # moveCount += 1
+            # if player1.training:
+                # player1.move(board)
             # else:
-            # player1.move(board)
+                # had = player1.move(board)
+                # if had:
+                    # hadCount += 1
+            # else:
+            player1.move(board)
             # print('done turn')
         else:
             # print('random move')
@@ -37,7 +37,9 @@ def play_game(board, player1, player2):
         finalResult = 'tie'
     player1.final_result(board)
     player2.final_result(board)
-    return finalResult, moveCount, hadCount, set(player1.currentPosition)
+    return finalResult, moveCount, hadCount
+
+    # return finalResult, moveCount, hadCount, set(player1.currentPosition)
 
 def battle(player1, player2, num_games = 100000, silent = False):
     draw_count = 0
@@ -49,10 +51,10 @@ def battle(player1, player2, num_games = 100000, silent = False):
     medPos = set()
     for i in range(num_games):
         board = Board()
-        result, total, had, pos = play_game(board, player1, player2)
+        result, total, had = play_game(board, player1, player2)
         medTotal += total
         medHad += had
-        medPos.update(pos)
+        # medPos.update(pos)
         # print(board)
         if result == 'me':
             # print('nn won')
@@ -69,12 +71,13 @@ def battle(player1, player2, num_games = 100000, silent = False):
     if not silent:
         p1 = player1.typeRep()
         p2 = player2.typeRep()
-        print("After {} game we have draws: {}, {} wins: {}, and {} wins: {}.".format(num_games, draw_count, p1, oneCount, p2, twoCount))
+        print("After {} games we have draws: {}, {} wins: {}, and {} wins: {}.".format(num_games, draw_count, p1, oneCount, p2, twoCount))
 
         print("Which gives percentages of draws: {:.2%}, {} wins: {:.2%}, and {} wins:  {:.2%}".format(
             draw_count / num_games, p1, oneCount / num_games, p2, twoCount / num_games))
 
-    return oneCount, twoCount, draw_count, medTotal, medHad, medPos
+    return oneCount, twoCount, draw_count, medTotal, medHad
+    # return oneCount, twoCount, draw_count, medTotal, medHad, medPos
 
 
 def evaluate_players(p1, p2, games_per_battle=100, num_battles=100, writer = None, silent = False):
@@ -88,15 +91,15 @@ def evaluate_players(p1, p2, games_per_battle=100, num_battles=100, writer = Non
     bigPos = set()
     
     for i in range(num_battles):
-        if i%100==0:
+        if i%10==0:
             print('starting battle #'+str(i))
-        p1win, p2win, draw, total, had, pos = battle(p1, p2, games_per_battle, silent)
+        p1win, p2win, draw, total, had = battle(p1, p2, games_per_battle, silent)
         bigTotal += total
         bigHad += had
         p1_wins.append(p1win)
         p2_wins.append(p2win)
         draws.append(draw)
-        bigPos.update(pos)
+        # bigPos.update(pos)
         game_counter = game_counter + 1
         game_number.append(game_counter)
         if writer is not None:
@@ -109,4 +112,5 @@ def evaluate_players(p1, p2, games_per_battle=100, num_battles=100, writer = Non
             # print('total had: ', bigHad)
             # print('percentage had: ', bigHad/bigTotal)
 
-    return game_number, p1_wins, p2_wins, draws, bigPos
+    # return game_number, p1_wins, p2_wins, draws
+    return game_number, p1_wins, p2_wins, draws

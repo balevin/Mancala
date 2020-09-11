@@ -34,6 +34,12 @@ class RandomPlayer(Player):
         #         foundOne = True
         # board.makeMove(trial)
         # return board.getState(), board.isOver()
+        if board.myMarbles == [4,4,4,4,4,4]:
+            board.makeMove(2)
+            return
+        if board.myMarbles == [4,4,0,5,5,5]:
+            board.makeMove(5)
+            return
         move = board.randomPossibleMove()
         board.makeMove(move)
 

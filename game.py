@@ -54,14 +54,22 @@ class Board:
 
     def makeMove(self, pile, show=False):
         reward = 0
-        #try:        
-            #if (int(pile)>5) or (int(pile)<0):
-                # print('Choose a valid pile')
-        #        return
-        #except:
-            # print('Choose a valid pile')
-        #        return
+        try:        
+            if (int(pile)>5) or (int(pile)<0):
+                print('Choose a valid pile')
+                return
+        except:
+            print('Choose a valid pile')
+            return
+
+        captures = self.findCapture()
+        if captures or captures == 0:
+            capturePossible = True
+        else:
+            capturePossible = False
+
         if self.myTurn:
+            endOnBack = False
             startIndex = int(pile)
             numMarbles = self.myMarbles[startIndex]
             if numMarbles == 0:
@@ -94,6 +102,8 @@ class Board:
                             addToMine = True
                             currentIndex = 0
                             addToScore = False
+            # print('marbles: ', numMarbles)
+            # print('index: ', currentIndex)
             if (currentIndex == 5) and  (not addToMine) and (not addToScore):
                 reward += 10 
                 self.myTurn = True
@@ -101,13 +111,16 @@ class Board:
                 self.myTurn = False
 
             if (addToMine) and (not addToScore) and (self.myMarbles[currentIndex-1] == 1) and (self.opMarbles[currentIndex-1]>0):
-                self.myScore += 1
-                self.myMarbles[currentIndex-1] = 0
-                reward += 5*(self.opMarbles[currentIndex-1] + 1)
-                self.myScore += self.opMarbles[currentIndex-1]
-                self.opMarbles[currentIndex-1] = 0
+                if capturePossible:
+                    if currentIndex>0: #RECENT CHANGE, CHECK IF RIGHT 
+                        self.myScore += 1
+                        self.myMarbles[currentIndex-1] = 0
+                        reward += 5*(self.opMarbles[currentIndex-1] + 1)
+                        self.myScore += self.opMarbles[currentIndex-1]
+                        self.opMarbles[currentIndex-1] = 0
         else:
             #print('making move')
+            endOnBack = False
             startIndex = int(pile)
             numMarbles = self.opMarbles[startIndex]
             #if numMarbles == 0:
@@ -143,6 +156,8 @@ class Board:
                             addToTheirs = True
                             currentIndex = 5
                             addToTheirScore = True
+                            if numMarbles == 0:
+                                endOnBack = True
             if (currentIndex == 0) and  (not addToTheirs) and (not addToTheirScore):
                 reward += 10
                 self.myTurn = False
@@ -153,11 +168,12 @@ class Board:
 
 
             if (addToTheirs) and (not addToTheirScore) and (self.opMarbles[currentIndex+1] == 1) and (self.myMarbles[currentIndex+1]>0):
-                self.opScore += 1
-                self.opMarbles[currentIndex+1] = 0
-                reward += 5*(self.myMarbles[currentIndex+1] + 1)
-                self.opScore += self.myMarbles[currentIndex+1]
-                self.myMarbles[currentIndex+1] = 0
+                if capturePossible:
+                    self.opScore += 1
+                    self.opMarbles[currentIndex+1] = 0
+                    reward += 5*(self.myMarbles[currentIndex+1] + 1)
+                    self.opScore += self.myMarbles[currentIndex+1]
+                    self.myMarbles[currentIndex+1] = 0
         if show:
             print(self.__str__())
         # print(self.__str__())

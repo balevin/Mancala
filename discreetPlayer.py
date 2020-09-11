@@ -26,6 +26,7 @@ class DiscreetQValuesPlayer(Player):
 
         else:
             self.qValues = {}
+        self.stateCounts = {}
         super().__init__()
 
     
@@ -46,7 +47,6 @@ class DiscreetQValuesPlayer(Player):
         game_length = len(self.action_log)
         for i in range(game_length-1):
             state = tuple(self.currentPosition[i])
-            # print('current state: ', state)
             totalMoves += 1
             if state in self.qValues:
                 # print('had it')
@@ -78,7 +78,7 @@ class DiscreetQValuesPlayer(Player):
         else:
             return totalMoves, hadMoves
             # thisStateActions = [0,0,0,0,0,0]
-        thisStateActions[self.action_log[game_length-1]] = (1-self.alpha)*thisStateActions[self.action_log[i]] + self.alpha*(self.extra_reward_log[game_length-1]+gameReward + self.gamma*max(nextQValues))
+        thisStateActions[self.action_log[game_length-1]] = (1-self.alpha)*thisStateActions[self.action_log[i]] + self.alpha*(self.extra_reward_log[game_length-1]+gameReward)
         self.qValues[state] = thisStateActions 
         return totalMoves, hadMoves
     def move(self, board):
@@ -89,7 +89,18 @@ class DiscreetQValuesPlayer(Player):
         # print(board)
         # print(board.getMyAvailable())
         # input()
+        # if move<0 or move>6:
+            # print('choose valid')
+            # return
+        
+        # Special case
+
+
         boardRep = tuple(board.myMarbles + board.opMarbles)
+        if boardRep not in self.stateCounts:
+            self.stateCounts[boardRep] = 1
+        else:
+            self.stateCounts[boardRep] += 1
         self.currentPosition.append(boardRep)
         # hi = False
         if (self.training) and (random.random() < self.random_move_prob):
@@ -97,7 +108,6 @@ class DiscreetQValuesPlayer(Player):
             move = board.randomPossibleMove()
         else:
             if boardRep in self.qValues:
-                # print(sum([x for x in self.qValues[boardRep] if x==0])
                 if (self.training) and (random.random()<0.5) and (0 in self.qValues[boardRep]):
                     possible = 0
                     available = board.getMyAvailable()
@@ -112,17 +122,24 @@ class DiscreetQValuesPlayer(Player):
                     available = board.getMyAvailable()
                     values = self.qValues[boardRep]
                     sortedValues = sorted(values, reverse=True)
-                    if float(sum(values)) == 0.0:
-                        move = board.makeSmartMove()
+#                    if float(sum(values)) == 0.0:
+#                        move = board.makeSmartMove()
                     for i in range(len(values)):
                         if values.index(sortedValues[i]) in available:
                             move = values.index(sortedValues[i])
                             break
+                    if float(sum(values)) == 0.0:
+                        move = board.makeSmartMove()
     
                     had = True
             else:
                 move = board.makeSmartMove()
                 had = False
+
+        if (not self.training) and (not self.me):
+            if board.opMarbles == [5,5,6,6,0,5]:
+                if board.myMarbles == [4,4,0,5,5,0]:
+                    move = 5
         try:
             if not move and move!=0:
                 move = board.makeSmartMove()
@@ -162,6 +179,13 @@ class DiscreetQValuesPlayer(Player):
                 self.random_move_prob*=self.random_move_decrease
     def typeRep(self):
         return ' Dolos '
+    
+    def setTraining(self, training):
+        self.training = training
+    
+    def setPerson(self, person):
+        self.me = person
+
     def saveQValues(self):
         if self.me:
             pickle_out = open("player1.pickle","wb")
@@ -171,3 +195,10 @@ class DiscreetQValuesPlayer(Player):
             pickle_out = open("player2.pickle","wb")
             pickle.dump(self.qValues, pickle_out)
             pickle_out.close()
+
+    def saveStateCounts(self):
+        if self.me:
+            pickle.dump(self.stateCounts, open('stateScoresBetter.pickle', 'wb'))
+        else:
+            pickle.dump(self.stateCounts, open('stateScoresBetter2.pickle', 'wb'))
+
